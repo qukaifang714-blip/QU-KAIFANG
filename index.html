@@ -26,7 +26,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--night)}
 body{font-family:var(--serif);color:#fff;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-#c{position:fixed;inset:0;display:block;background:linear-gradient(180deg,#03040c 0%,#0a0c26 38%,#1c1440 72%,#2b1640 100%)}
+#c{position:fixed;inset:0;display:block;background:linear-gradient(180deg,#020205 0%,#06060f 45%,#110a18 78%,#1a0c1c 100%)}
 #vig{position:fixed;inset:0;pointer-events:none;z-index:2;background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,0) 45%,rgba(0,0,0,.6) 100%)}
 #flash{position:fixed;inset:0;pointer-events:none;z-index:9;opacity:0;background:radial-gradient(circle at 50% 50%,#fff8e6 0%,rgba(255,220,170,.85) 35%,rgba(255,180,200,0) 80%)}
 #flash.go{animation:flash 1.8s ease-out forwards}
@@ -111,24 +111,24 @@ button{font:inherit;color:inherit}
 #orns{position:fixed;inset:0;z-index:3;pointer-events:none;transition:opacity .8s}
 #orns.away{opacity:0}
 #orns.away .orn{pointer-events:none}
-.orn{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border:0;padding:0;border-radius:50%;cursor:pointer;pointer-events:auto;
+.orn{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border:0;padding:0;border-radius:50%;cursor:pointer;pointer-events:auto;
   background:radial-gradient(circle at 34% 30%,#fff 0%,var(--c1) 22%,var(--c2) 70%,var(--c3) 100%);
-  box-shadow:0 0 14px 3px var(--glow),0 0 34px 8px var(--glow2),inset -3px -4px 6px rgba(0,0,0,.25);
+  box-shadow:0 0 10px 2px var(--glow),0 0 22px 5px var(--glow2),inset -2px -3px 5px rgba(0,0,0,.22);
   opacity:0;transform:scale(.2);transition:opacity .7s,transform .9s cubic-bezier(.3,1.6,.5,1)}
-.orn::before{content:"";position:absolute;left:50%;top:-6px;width:9px;height:7px;margin-left:-4.5px;border-radius:2px 2px 1px 1px;background:linear-gradient(90deg,#8f611c,#fff2c6,#a87420)}
-.orn::after{content:"";position:absolute;left:50%;top:-14px;width:1px;height:9px;background:rgba(255,230,180,.6)}
+.orn::before{content:"";position:absolute;left:50%;top:-5px;width:7px;height:5px;margin-left:-3.5px;border-radius:2px 2px 1px 1px;background:linear-gradient(90deg,#8f611c,#fff2c6,#a87420)}
+.orn::after{content:"";position:absolute;left:50%;top:-11px;width:1px;height:7px;background:rgba(255,230,180,.6)}
 .orn.show{opacity:1;transform:scale(1);animation:bob 3.4s ease-in-out infinite}
 .orn.show:hover{transform:scale(1.18)}
 .orn .ping{position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--c1);opacity:0;animation:ping 2.6s ease-out infinite}
 .orn.seen .ping{display:none}
 .orn.seen{box-shadow:0 0 8px 1px var(--glow),inset -3px -4px 6px rgba(0,0,0,.25)}
-.orn .heart{position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5px 0 0 -5.5px;opacity:0;transition:opacity .6s}
+.orn .heart{position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4px 0 0 -4.5px;opacity:0;transition:opacity .6s}
 .orn.seen .heart{opacity:.95}
 @keyframes ping{0%{opacity:.9;transform:scale(.9)}100%{opacity:0;transform:scale(1.9)}}
-@keyframes bob{50%{margin-top:-19px}}
+@keyframes bob{50%{margin-top:-14px}}
 .gold{--c1:#ffe7a6;--c2:#e2b04f;--c3:#7c5214;--glow:rgba(255,205,110,.65);--glow2:rgba(255,190,90,.22)}
 .rose{--c1:#ffd0e0;--c2:#ff6f9c;--c3:#86163f;--glow:rgba(255,120,170,.65);--glow2:rgba(255,100,150,.22)}
-.ice{--c1:#e6fbff;--c2:#7fd3e8;--c3:#235e78;--glow:rgba(150,225,255,.6);--glow2:rgba(120,200,255,.2)}
+.ice{--c1:#ffffff;--c2:#f3dde6;--c3:#9c7484;--glow:rgba(255,240,246,.6);--glow2:rgba(255,220,235,.2)}
 
 /* ---------- memory card ---------- */
 .veil{position:fixed;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
@@ -359,8 +359,8 @@ function resize() {
   cv.width = W * DPR; cv.height = H * DPR;
   cv.style.width = W + 'px'; cv.style.height = H + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  tree.cx = W / 2; tree.top = H * 0.41; tree.bottom = H * 0.86;
-  tree.R = Math.min(W * 0.36, (tree.bottom - tree.top) * 0.46);
+  tree.cx = W / 2; tree.top = H * 0.38; tree.bottom = H * 0.8;
+  tree.R = Math.min(W * 0.3, (tree.bottom - tree.top) * 0.4);
   moon = makeMoon(Math.max(14, Math.min(W, H) * 0.032));
   placeOrns();
 }
@@ -369,7 +369,7 @@ resize();
 
 /* ---------- sky ---------- */
 const stars = Array.from({ length: 170 }, () => ({ x: Math.random(), y: Math.pow(Math.random(), 1.4) * 0.8, r: rand(0.3, 1.1), ph: rand(0, TAU), sp: rand(0.4, 1.6) }));
-const bokehC = ['255,200,130', '255,140,185', '150,210,255', '255,225,190'];
+const bokehC = ['255,190,210', '255,140,185', '255,230,240', '255,205,220'];
 const bokeh = Array.from({ length: 24 }, (_, i) => ({ x: Math.random(), y: rand(0.1, 1), r: rand(22, 80), c: bokehC[i % 4], a: rand(0.04, 0.11), vx: rand(-0.004, 0.004), vy: rand(-0.008, -0.002), ph: rand(0, TAU) }));
 const flakes = [];
 [[95, 0.4, 0.9, 10, 22, 0.5], [70, 1, 2, 24, 42, 0.75], [16, 3.5, 6, 48, 80, 0.4]].forEach(([n, r0, r1, v0, v1, a], layer) => {
@@ -461,21 +461,28 @@ function heartTarget(p, outline) {
   p.hz = rand(-1, 1); p.dl = Math.random(); p.hc = heartC[(Math.random() * 4) | 0];
   return p;
 }
-for (let k = 0; k < 2; k++) for (let i = 0; i < 520; i++) {
-  const t = i / 520;
-  pts.push(heartTarget({ t, rn: t, a: t * TAU * 6 + k * Math.PI, c: k ? '255,165,205' : '255,214,135', s: 1.1, tw: rand(0, TAU) }, true));
+/* pink spiral ribbon, like a strand of light wound around the tree */
+const pinkC = ['255,182,203', '255,214,226', '255,240,245', '255,150,182', '255,200,215'];
+const lowEnd = Math.min(innerWidth, innerHeight) < 500;
+const RIB = lowEnd ? 2000 : 2600, FILL = lowEnd ? 380 : 520, RING = lowEnd ? 1100 : 1500;
+for (let i = 0; i < RIB; i++) {
+  const t = Math.pow(i / RIB, 0.92), j = (Math.random() + Math.random() - 1) * 0.07;
+  pts.push(heartTarget({ t: t + j * 0.15, rn: Math.max(0, t * (1 + j)), a: t * TAU * 7.5 + j * 2, c: pinkC[i % 5], s: rand(0.6, 1.3), tw: rand(0, TAU) }, i % 3 === 0));
 }
-const fillC = ['140,255,205', '110,230,195', '200,255,235', '255,244,220'];
-for (let i = 0; i < 1700; i++) {
-  const t = Math.pow(Math.random(), 0.55);
-  pts.push(heartTarget({ t, rn: t * rand(0.6, 1.02), a: rand(0, TAU), c: fillC[i % 4], s: rand(0.55, 1.2), tw: rand(0, TAU) }, false));
+for (let i = 0; i < FILL; i++) {
+  const t = Math.pow(Math.random(), 0.6);
+  pts.push(heartTarget({ t, rn: t * rand(0.2, 1), a: rand(0, TAU), c: i % 2 ? '255,236,242' : '255,190,210', s: rand(0.35, 0.8), tw: rand(0, TAU), dim: true }, false));
 }
-const ornC = ['255,75,105', '255,205,105', '255,250,240', '255,140,190'];
-for (let i = 0; i < 110; i++) {
+for (let i = 0; i < 70; i++) {
   const t = Math.pow(Math.random(), 0.6) * 0.95 + 0.05;
-  pts.push(heartTarget({ t, rn: t * rand(0.85, 1), a: rand(0, TAU), c: ornC[i % 4], s: rand(2.2, 3.1), tw: rand(0, TAU), orn: true }, false));
+  pts.push(heartTarget({ t, rn: t * rand(0.85, 1), a: rand(0, TAU), c: i % 2 ? '255,250,252' : '255,160,190', s: rand(1.6, 2.4), tw: rand(0, TAU), orn: true }, false));
 }
-for (let i = 0; i < 220; i++) pts.push(heartTarget({ t: 1.02, rn: rand(1, 1.35), a: rand(0, TAU), c: '255,225,175', s: rand(0.5, 1.05), tw: rand(0, TAU), ring: true }, false));
+/* orbit rings around the base */
+const BANDS = [1.12, 1.38, 1.66, 1.98, 2.34];
+for (let i = 0; i < RING; i++) {
+  const band = BANDS[i % BANDS.length];
+  pts.push(heartTarget({ t: 1.02, rn: band + (Math.random() - 0.5) * 0.05, a: rand(0, TAU), c: pinkC[i % 5], s: rand(0.35, 0.85), tw: rand(0, TAU), ring: true }, false));
+}
 
 let rot = 0, grow = 0, growStart = 0, topBurst = false, m = 0, mT = 0;
 
@@ -488,9 +495,9 @@ function drawTree(now, dt) {
   for (const p of pts) {
     if (p.t > lim) continue;
     const fade = Math.min(1, (lim - p.t) * 8);
-    const ang = p.a + rot, r = p.rn * R;
+    const ang = p.a + (p.ring ? rot * 0.55 : rot), r = p.rn * R;
     const zn = Math.sin(ang) * Math.min(1, p.rn);
-    let x = cx + Math.cos(ang) * r, y = top + p.t * h + zn * R * 0.08, depth = (zn + 1) / 2;
+    let x = cx + Math.cos(ang) * r, y = p.ring ? bottom + Math.sin(ang) * r * 0.16 : top + p.t * h + zn * R * 0.08, depth = (zn + 1) / 2;
     const mp = clamp01((m - p.dl * 0.35) / 0.65);
     const e = mp * mp * (3 - 2 * mp);
     if (e > 0) {
@@ -499,7 +506,8 @@ function drawTree(now, dt) {
     }
     const tw = 0.55 + 0.45 * Math.sin(now * 0.004 + p.tw);
     let a = (0.22 + 0.78 * depth) * fade * tw;
-    if (p.ring) a *= (1 - e) * 0.7;
+    if (p.ring) a *= (1 - e) * 0.75 * Math.min(1, 2.6 / p.rn);
+    if (p.dim) a *= 0.55;
     const core = p.s * (0.7 + 0.6 * depth);
     const rad = core * (p.orn ? 6 : 4.5);
     if (e < 1) spr(glow(p.c), x, y, rad, a * (1 - e));
