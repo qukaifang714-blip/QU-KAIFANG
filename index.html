@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Christmas Tree for Yiwei</title>
+<title>给 Yiwei 的圣诞礼物</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;500&display=swap">
@@ -607,7 +607,24 @@ function sched() {
     nt += b * BEAT; ni = (ni + 1) % SONG.length;
   }
 }
+/* iPhone: Web Audio is muted by the silent switch unless the page also plays a media element */
+let unlockEl = null;
+function unlockIOSAudio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  try {
+    if (!unlockEl) {
+      const sr = 8000, n = sr / 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+      const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+      w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+      v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+      unlockEl = new Audio(URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })));
+      unlockEl.loop = true; unlockEl.setAttribute('playsinline', ''); unlockEl.volume = 0.01;
+    }
+    const pr = unlockEl.play(); if (pr && pr.catch) pr.catch(() => {});
+  } catch (e) {}
+}
 function startMusic() {
+  unlockIOSAudio();
   try {
     if (!actx) {
       actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -622,7 +639,7 @@ function startMusic() {
     playing = true; mbtn.classList.add('on');
   } catch (e) { mbtn.style.display = 'none'; }
 }
-function stopMusic() { clearInterval(timer); playing = false; mbtn.classList.remove('on'); }
+function stopMusic() { clearInterval(timer); playing = false; mbtn.classList.remove('on'); try { if (unlockEl) unlockEl.pause(); } catch (e) {} }
 mbtn.addEventListener('click', e => { e.stopPropagation(); playing ? stopMusic() : startMusic(); });
 mbtn.addEventListener('pointerdown', e => e.stopPropagation());
 
