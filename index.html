@@ -287,7 +287,13 @@ const TAU = Math.PI * 2;
 const rand = (a, b) => a + Math.random() * (b - a);
 const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
 let W = 0, H = 0, DPR = 1, moon = null;
-const tree = { cx: 0, top: 0, bottom: 0, R: 0 };
+const tree = { cx: 0, top: 0, bottom: 0, R: 0, starX: 0, starY: 0 };
+/* simple 3D camera: the tree turns around its axis, seen from slightly above */
+const PITCH = 0.38, cP = Math.cos(PITCH), sP = Math.sin(PITCH);
+function proj(X, Yup, Z) {
+  const F = tree.R * 5, d = Z * cP + Yup * sP, k = F / (F - d);
+  return [tree.cx + X * k, tree.bottom + (-Yup * cP + Z * sP) * k, d, k];
+}
 
 /* ---------- glow sprites ---------- */
 const cache = {};
@@ -343,24 +349,23 @@ const ornBtns = MEMORIES.map((m, i) => {
   return b;
 });
 function placeOrns() {
-  const n = MEMORIES.length, h = tree.bottom - tree.top;
+  const n = MEMORIES.length, hh = (tree.bottom - tree.top) * 0.84;
   ornBtns.forEach((b, i) => {
     const t = 0.18 + (i / (n - 1)) * 0.72;
-    const side = i % 2 ? 1 : -1;
-    const x = tree.cx + side * t * tree.R * ORN_SPREAD[i];
-    const y = tree.top + t * h;
+    const side = i % 2 ? 1 : -1, rr = t * tree.R;
+    const X = side * rr * ORN_SPREAD[i], Z = Math.sqrt(Math.max(0, rr * rr - X * X)) * 0.9;
+    const [x, y] = proj(X, (1 - t) * hh, Z);
     b.style.left = x + 'px'; b.style.top = y + 'px';
   });
 }
-
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
   W = innerWidth; H = innerHeight;
   cv.width = W * DPR; cv.height = H * DPR;
   cv.style.width = W + 'px'; cv.style.height = H + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  tree.cx = W / 2; tree.top = H * 0.38; tree.bottom = H * 0.8;
-  tree.R = Math.min(W * 0.3, (tree.bottom - tree.top) * 0.4);
+  tree.cx = W / 2; tree.top = H * 0.36; tree.bottom = H * 0.8;
+  tree.R = Math.min(W * 0.28, (tree.bottom - tree.top) * 0.36);
   moon = makeMoon(Math.max(14, Math.min(W, H) * 0.032));
   placeOrns();
 }
@@ -414,9 +419,9 @@ function drawSky(now, dt) {
 function drawGroundGlow(strength) {
   const { cx, bottom, R } = tree;
   ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = strength;
-  ctx.translate(cx, bottom + 14); ctx.scale(1, 0.2);
+  ctx.translate(cx, bottom); ctx.scale(1, 0.32);
   const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 2.3);
-  g.addColorStop(0, 'rgba(255,200,150,.35)'); g.addColorStop(0.5, 'rgba(255,140,180,.1)'); g.addColorStop(1, 'rgba(255,140,180,0)');
+  g.addColorStop(0, 'rgba(255,190,170,.4)'); g.addColorStop(0.35, 'rgba(220,150,230,.12)'); g.addColorStop(1, 'rgba(255,140,180,0)');
   ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R * 2.3, 0, TAU); ctx.fill();
   ctx.restore();
 }
@@ -461,54 +466,59 @@ function heartTarget(p, outline) {
   p.hz = rand(-1, 1); p.dl = Math.random(); p.hc = heartC[(Math.random() * 4) | 0];
   return p;
 }
-/* pink spiral ribbon, like a strand of light wound around the tree */
-const pinkC = ['255,182,203', '255,214,226', '255,240,245', '255,150,182', '255,200,215'];
+/* silver-pink spiral ribbon wound around the tree, a little volume inside, and a galaxy of rings on the floor */
+const ribC = ['255,255,255', '255,238,246', '246,224,255', '255,205,228', '255,250,240'];
+const floorC = ['214,170,236', '255,192,222', '196,160,226', '240,214,255'];
 const lowEnd = Math.min(innerWidth, innerHeight) < 500;
-const RIB = lowEnd ? 2000 : 2600, FILL = lowEnd ? 380 : 520, RING = lowEnd ? 1100 : 1500;
+const RIB = lowEnd ? 2200 : 2800, FILL = lowEnd ? 420 : 600, RING = lowEnd ? 1500 : 2000, DISK = lowEnd ? 500 : 700;
 for (let i = 0; i < RIB; i++) {
-  const t = Math.pow(i / RIB, 0.92), j = (Math.random() + Math.random() - 1) * 0.07;
-  pts.push(heartTarget({ t: t + j * 0.15, rn: Math.max(0, t * (1 + j)), a: t * TAU * 7.5 + j * 2, c: pinkC[i % 5], s: rand(0.6, 1.3), tw: rand(0, TAU) }, i % 3 === 0));
+  const t = Math.sqrt((i + 1) / RIB), j = (Math.random() + Math.random() - 1) * 0.06;
+  pts.push(heartTarget({ t, rn: Math.max(0.01, t * (1 + j)), a: t * TAU * 7 + j * 1.5, yj: (Math.random() - 0.5) * 0.02, c: ribC[i % 5], s: rand(0.45, 1.05), tw: rand(0, TAU) }, i % 3 === 0));
 }
 for (let i = 0; i < FILL; i++) {
-  const t = Math.pow(Math.random(), 0.6);
-  pts.push(heartTarget({ t, rn: t * rand(0.2, 1), a: rand(0, TAU), c: i % 2 ? '255,236,242' : '255,190,210', s: rand(0.35, 0.8), tw: rand(0, TAU), dim: true }, false));
+  const t = Math.pow(Math.random(), 0.7);
+  pts.push(heartTarget({ t, rn: t * rand(0.15, 0.95), a: rand(0, TAU), c: i % 2 ? '255,236,246' : '230,200,255', s: rand(0.35, 0.8), tw: rand(0, TAU), dim: true }, false));
 }
-for (let i = 0; i < 70; i++) {
-  const t = Math.pow(Math.random(), 0.6) * 0.95 + 0.05;
-  pts.push(heartTarget({ t, rn: t * rand(0.85, 1), a: rand(0, TAU), c: i % 2 ? '255,250,252' : '255,160,190', s: rand(1.6, 2.4), tw: rand(0, TAU), orn: true }, false));
+for (let i = 0; i < 80; i++) {
+  const t = Math.random() * 0.95 + 0.05;
+  pts.push(heartTarget({ t, rn: t * rand(0.9, 1.05), a: rand(0, TAU), c: i % 3 ? '255,255,255' : '255,180,210', s: rand(1.5, 2.3), tw: rand(0, TAU), orn: true }, false));
 }
-/* orbit rings around the base */
-const BANDS = [1.12, 1.38, 1.66, 1.98, 2.34];
+const BANDS = [1.15, 1.35, 1.58, 1.82, 2.08, 2.36, 2.66, 3.0];
 for (let i = 0; i < RING; i++) {
   const band = BANDS[i % BANDS.length];
-  pts.push(heartTarget({ t: 1.02, rn: band + (Math.random() - 0.5) * 0.05, a: rand(0, TAU), c: pinkC[i % 5], s: rand(0.35, 0.85), tw: rand(0, TAU), ring: true }, false));
+  pts.push(heartTarget({ t: 1.02, rn: band + (Math.random() - 0.5) * 0.04, a: rand(0, TAU), c: floorC[i % 4], s: rand(0.35, 0.85), tw: rand(0, TAU), ring: true }, false));
+}
+for (let i = 0; i < DISK; i++) {
+  pts.push(heartTarget({ t: 1.02, rn: Math.sqrt(Math.random()) * 3.1 + 0.15, a: rand(0, TAU), c: floorC[i % 4], s: rand(0.3, 0.7), tw: rand(0, TAU), ring: true, dim: true }, false));
 }
 
 let rot = 0, grow = 0, growStart = 0, topBurst = false, m = 0, mT = 0;
 
 function drawTree(now, dt) {
-  const { cx, top, bottom, R } = tree, h = bottom - top;
+  const { cx, top, bottom, R } = tree, h = bottom - top, hh = h * 0.84;
   m += (mT - m) * Math.min(1, dt * 1.8);
-  const HS = R * 1.15 * (1 + 0.035 * Math.sin(now * 0.004)), hcy = top + h * 0.42;
+  const HS = R * 1.25 * (1 + 0.035 * Math.sin(now * 0.004)), hcy = top + h * 0.45;
   const cosR = 0.88 + 0.12 * Math.cos(now * 0.0009), lim = grow * 1.08;
   ctx.globalCompositeOperation = 'lighter';
   for (const p of pts) {
     if (p.t > lim) continue;
     const fade = Math.min(1, (lim - p.t) * 8);
-    const ang = p.a + (p.ring ? rot * 0.55 : rot), r = p.rn * R;
-    const zn = Math.sin(ang) * Math.min(1, p.rn);
-    let x = cx + Math.cos(ang) * r, y = p.ring ? bottom + Math.sin(ang) * r * 0.16 : top + p.t * h + zn * R * 0.08, depth = (zn + 1) / 2;
+    const ang = p.a + (p.ring ? rot * 0.45 : rot), r = p.rn * R;
+    const X = Math.cos(ang) * r, Z = Math.sin(ang) * r;
+    const Yup = p.ring ? 0 : (1 - p.t) * hh + (p.yj || 0) * hh;
+    let [x, y, d, k] = proj(X, Yup, Z);
+    let depth = clamp01(0.5 + d / (2.4 * R));
     const mp = clamp01((m - p.dl * 0.35) / 0.65);
     const e = mp * mp * (3 - 2 * mp);
     if (e > 0) {
       const hx = cx + p.hx * HS * cosR, hy = hcy + p.hy * HS;
-      x += (hx - x) * e; y += (hy - y) * e; depth += ((p.hz + 1) / 2 * 0.6 + 0.4 - depth) * e;
+      x += (hx - x) * e; y += (hy - y) * e; depth += ((p.hz + 1) / 2 * 0.6 + 0.4 - depth) * e; k += (1 - k) * e;
     }
     const tw = 0.55 + 0.45 * Math.sin(now * 0.004 + p.tw);
-    let a = (0.22 + 0.78 * depth) * fade * tw;
-    if (p.ring) a *= (1 - e) * 0.75 * Math.min(1, 2.6 / p.rn);
-    if (p.dim) a *= 0.55;
-    const core = p.s * (0.7 + 0.6 * depth);
+    let a = (0.15 + 0.85 * depth) * fade * tw;
+    if (p.ring) a *= (1 - e) * 0.85 * Math.min(1, 3 / p.rn);
+    if (p.dim) a *= 0.5;
+    const core = p.s * (0.55 + 0.75 * depth) * k;
     const rad = core * (p.orn ? 6 : 4.5);
     if (e < 1) spr(glow(p.c), x, y, rad, a * (1 - e));
     if (e > 0) spr(glow(p.hc), x, y, rad * 0.95, a * e * (p.orn ? 0.8 : 0.5));
@@ -516,20 +526,22 @@ function drawTree(now, dt) {
   const sa = clamp01((grow - 0.04) * 3) * (1 - m);
   if (sa > 0.01) {
     const extra = allSeen && !letterRead ? 1.35 + 0.25 * Math.sin(now * 0.006) : 1;
-    const pulse = 1 + 0.08 * Math.sin(now * 0.005), sx = cx, sy = top - 16;
-    spr(soft('255,215,140'), sx, sy, 80 * pulse * extra, 0.45 * sa);
+    const pulse = 1 + 0.08 * Math.sin(now * 0.005);
+    const [sx, sy] = proj(0, hh + 10, 0);
+    spr(soft('255,240,250'), sx, sy, 80 * pulse * extra, 0.4 * sa);
     const fl = 1 + 0.25 * Math.sin(now * 0.003);
-    ctx.globalAlpha = 0.7 * sa;
-    for (const [w, hh] of [[110 * fl * extra, 1.3], [1.3, 70 * fl * extra]]) {
-      const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, Math.max(w, hh));
-      g.addColorStop(0, 'rgba(255,245,215,.9)'); g.addColorStop(1, 'rgba(255,245,215,0)');
-      ctx.fillStyle = g; ctx.fillRect(sx - w, sy - hh, w * 2, hh * 2);
+    ctx.globalAlpha = 0.75 * sa;
+    for (const [w, hh2] of [[120 * fl * extra, 1.3], [1.3, 80 * fl * extra]]) {
+      const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, Math.max(w, hh2));
+      g.addColorStop(0, 'rgba(255,250,255,.95)'); g.addColorStop(1, 'rgba(255,250,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(sx - w, sy - hh2, w * 2, hh2 * 2);
     }
     ctx.globalCompositeOperation = 'source-over';
-    ctx.save(); ctx.globalAlpha = sa; ctx.shadowColor = 'rgba(255,205,110,1)'; ctx.shadowBlur = 22;
+    ctx.save(); ctx.globalAlpha = sa; ctx.shadowColor = 'rgba(255,240,250,1)'; ctx.shadowBlur = 24;
     const sg = ctx.createLinearGradient(sx, sy - 18, sx, sy + 14);
-    sg.addColorStop(0, '#fff8de'); sg.addColorStop(1, '#f0bf5a');
-    ctx.fillStyle = sg; starPath(sx, sy, 16 * pulse, 6.5 * pulse); ctx.fill(); ctx.restore();
+    sg.addColorStop(0, '#ffffff'); sg.addColorStop(1, '#ffe3f0');
+    ctx.fillStyle = sg; starPath(sx, sy, 15 * pulse, 6 * pulse); ctx.fill(); ctx.restore();
+    tree.starX = sx; tree.starY = sy;
   }
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
 }
@@ -705,7 +717,7 @@ function closeMemo() {
   memoVeil.classList.remove('on'); modal = false;
   if (!allSeen && seen.size === MEMORIES.length) {
     allSeen = true; chime([783.99, 987.77, 1174.66, 1567.98], 0.14, 0.12);
-    burst(tree.cx, tree.top - 16, 70, false, 0.9);
+    burst(tree.starX || tree.cx, tree.starY || tree.top, 70, false, 0.9);
   }
   progressTip();
   if (lastFocus && lastFocus.focus) lastFocus.focus();
@@ -749,7 +761,7 @@ addEventListener('keydown', e => {
 
 function starTapped() {
   heartMode = true; mT = 1; ornsEl.classList.add('away');
-  burst(tree.cx, tree.top - 16, 80, false, 0.9);
+  burst(tree.starX || tree.cx, tree.starY || tree.top, 80, false, 0.9);
   tipEl.style.opacity = 0; setLine(HEART_LINE);
   chime([523.25, 659.25, 783.99, 1046.5], 0.12, 0.14);
   if (allSeen && !letterRead) {
@@ -782,7 +794,7 @@ let down = false;
 addEventListener('pointerdown', e => {
   down = true;
   if (state !== 'tree' || modal) return;
-  const dx = e.clientX - tree.cx, dy = e.clientY - (tree.top - 16);
+  const dx = e.clientX - (tree.starX || tree.cx), dy = e.clientY - (tree.starY || tree.top);
   if (grow > 0.95 && !heartMode && dx * dx + dy * dy < 55 * 55) { starTapped(); return; }
   burst(e.clientX, e.clientY, 24, false); burst(e.clientX, e.clientY, 8, true);
   if (actx && playing) bell(1046.5 * [1, 1.25, 1.5, 2][(Math.random() * 4) | 0], actx.currentTime, 0.4, 0.1);
@@ -802,7 +814,7 @@ function frame(now) {
     rot += dt * 0.4;
     drawGroundGlow(grow);
     drawTree(now, dt);
-    if (p >= 1 && !topBurst) { topBurst = true; burst(tree.cx, tree.top - 16, 60, false, 0.8); }
+    if (p >= 1 && !topBurst) { topBurst = true; burst(tree.starX || tree.cx, tree.starY || tree.top, 60, false, 0.8); }
   }
   drawSnow(now, dt);
   drawParts(dt);
